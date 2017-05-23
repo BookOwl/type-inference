@@ -110,6 +110,7 @@ pub fn annote(e: &Expr, env: &mut Enviroment, name_gen: &mut NameGenerator) -> R
             Ok(AnnotedExpr::App(box func, box arg, new_type))
         },
         Expr::Let(ref id, ref val, ref body) => {
+            env.insert(id.clone(), &PrimitiveType::Var(name_gen.next_name()));
             let annoted_val = annote(val, env, name_gen)?;
             env.insert(id.clone(), &type_of(&annoted_val));
             let annoted_body = annote(body, env, name_gen)?;
