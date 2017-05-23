@@ -22,7 +22,37 @@ impl Display for Error {
 pub type Result<T> = ::std::result::Result<T, Error>;
 
 /// A mapping between names and their types
-pub type Enviroment = HashMap<String, PrimitiveType>;
+#[derive(Debug, Clone)]
+pub struct Enviroment<'a> {
+    frame: HashMap<String, PrimitiveType>,
+    prev: Option<&'a Enviroment<'a>>,
+}
+impl<'a> Enviroment<'a> {
+    pub fn empty() -> Enviroment<'a> {
+        Enviroment {
+            frame: HashMap::new(),
+            prev: None,
+        }
+    }
+    pub fn new_frame(&'a self) -> Enviroment<'a> {
+        Enviroment {
+            frame: HashMap::new(),
+            prev: Some(self)
+        }
+    }
+    pub fn get(&self, key: String) -> Option<PrimitiveType> {
+        if let Some(v) = self.frame.get(&key) {
+            Some(v.clone())
+        } else if let Some(prev) = self.prev {
+            prev.get(key)
+        } else {
+            None
+        }
+    }
+    pub fn insert(&mut self, key: String, val: &PrimitiveType) {
+        self.frame.insert(key, val.clone());
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Constraint(PrimitiveType, PrimitiveType);
@@ -51,7 +81,7 @@ pub fn annote(e: &Expr, env: &mut Enviroment, name_gen: &mut NameGenerator) -> R
         Expr::Num(n) => Ok(AnnotedExpr::Num(n, PrimitiveType::Num)),
         Expr::Bool(b) => Ok(AnnotedExpr::Bool(b, PrimitiveType::Bool)),
         Expr::Var(ref name) => {
-            if let Some(t) = env.get(name) {
+            if let Some(t) = env.get(name.clone()) {
                 Ok(AnnotedExpr::Var(name.clone(), t.clone()))
             } else {
                 Err(Error::UndefinedName(name.clone()))
@@ -65,13 +95,12 @@ pub fn annote(e: &Expr, env: &mut Enviroment, name_gen: &mut NameGenerator) -> R
             Ok(AnnotedExpr::BinOp(box l, *op, box r, new_type))
         },
         Expr::Fun(ref arg_name, ref body) => {
-            let annoted_body = annote(body, env, name_gen)?;
-            if let Some(t) = env.get(arg_name) {
-                Ok(AnnotedExpr::Fun(arg_name.clone(), box annoted_body, 
-                   PrimitiveType::Fun(box t.clone(), box PrimitiveType::Var(name_gen.next_name()))))
-            } else {
-                Err(Error::UndefinedName(arg_name.clone()))
-            }
+            let mut new_env = env.new_frame();
+            let t = PrimitiveType::Var(name_gen.next_name());
+            new_env.insert(arg_name.clone(), &t);
+            let annoted_body = annote(body, &mut new_env, name_gen)?;
+            Ok(AnnotedExpr::Fun(arg_name.clone(), box annoted_body, 
+                PrimitiveType::Fun(box t.clone(), box PrimitiveType::Var(name_gen.next_name()))))
         },
         Expr::App(ref func, ref arg) => {
             let func = annote(func, env, name_gen)?;
@@ -82,9 +111,9 @@ pub fn annote(e: &Expr, env: &mut Enviroment, name_gen: &mut NameGenerator) -> R
         },
         Expr::Let(ref id, ref val, ref body) => {
             let annoted_val = annote(val, env, name_gen)?;
-            env.insert(id.clone(), type_of(&annoted_val));
+            env.insert(id.clone(), &type_of(&annoted_val));
             let annoted_body = annote(body, env, name_gen)?;
-            if let Some(t) = env.get(id) {
+            if let Some(t) = env.get(id.clone()) {
                 Ok(AnnotedExpr::Let(id.clone(),
                    box annoted_val,
                    box annoted_body,

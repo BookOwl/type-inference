@@ -3,11 +3,8 @@
 // but I plan to refactor the code to be more Rust-y and add more features soon.
 //
 // TODO:
-// 1. Add better error messages for type inference errors.
-// 2. Fix https://github.com/prakhar1989/type-inference/issues/5
-// 3. Intergrate a parser (lalrpop?) to allow users to type their own expressions.
-// 4. Add typing for more features. 
-// 5. Publish as a crate on crates.io
+// * Fix https://github.com/prakhar1989/type-inference/issues/5
+// * Add typing for more features. 
 
 #![feature(box_syntax)]
 
@@ -40,6 +37,7 @@ fn repl() {
     println!("Hit ^C to quit ");
     let mut stdout = io::stdout();
     let mut stdin = io::stdin();
+    let mut env = Enviroment::empty();
     loop {
         print!("> ");
         stdout.flush().unwrap();
@@ -52,13 +50,9 @@ fn repl() {
                 continue;
             }
         };
-        let mut env = HashMap::new();
+        let mut new_env = env.new_frame();
         let mut name_gen = NameGenerator::new();
-        let ids = get_ids(&expr);
-        for name in ids {
-            env.insert(name, PrimitiveType::Var(name_gen.next_name()));
-        }
-        match infer(&mut env, &expr, &mut name_gen) {
+        match infer(&mut new_env, &expr, &mut name_gen) {
             Ok(aexpr) => println!("{}", type_of(&aexpr)),
             Err(e) => println!("type error: {:?}", e),
         }
