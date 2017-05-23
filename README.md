@@ -16,6 +16,8 @@ The language that this project infers types on it very simple. It only contains
 * Relational operators (`>`, `<`)
 * Logical operators (`&&`, `||`)
 * Variables (`x`, `foo_24`, etc.)
+* Let (`let x = 5 in x + 1`)
+* If (`if true then 1 else 0`)
 
 ## License
 This project is [Unlicensed](UNLICENSE).

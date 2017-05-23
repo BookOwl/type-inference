@@ -53,6 +53,8 @@ pub enum Expr {
     BinOp(Box<Expr>, Op, Box<Expr>),
     Fun(String, Box<Expr>),
     App(Box<Expr>,  Box<Expr>),
+    Let(String, Box<Expr>, Box<Expr>),
+    If(Box<Expr>, Box<Expr>, Box<Expr>),
 }
 impl Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -63,6 +65,8 @@ impl Display for Expr {
             Expr::BinOp(ref l, ref op, ref r) => format!("({} {} {})", l, op, r),
             Expr::Fun(ref id, ref body) => format!("(fun {} -> {})", id, body),
             Expr::App(ref func, ref op) => format!("({} {})", func, op),
+            Expr::Let(ref id, ref val, ref body) => format!("(let {} = {} in {})", id, val, body),
+            Expr::If(ref pred, ref then, ref otherwise) => format!("(if {} then {} else {})", pred, then, otherwise),
     })
     }
 }
@@ -75,6 +79,8 @@ pub enum AnnotedExpr {
     BinOp(Box<AnnotedExpr>, Op, Box<AnnotedExpr>, PrimitiveType),
     Fun(String, Box<AnnotedExpr>, PrimitiveType),
     App(Box<AnnotedExpr>,  Box<AnnotedExpr>, PrimitiveType),
+    Let(String, Box<AnnotedExpr>, Box<AnnotedExpr>, PrimitiveType),
+    If(Box<AnnotedExpr>, Box<AnnotedExpr>, Box<AnnotedExpr>, PrimitiveType),
 }
 impl Display for AnnotedExpr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -85,6 +91,8 @@ impl Display for AnnotedExpr {
             AnnotedExpr::BinOp(ref l, ref op, ref r, ref type_) => format!("({} {} {} : {})", l, op, r, type_),
             AnnotedExpr::Fun(ref id, ref body, ref type_) => format!("(fun {} -> {}) : {}", id, body, type_),
             AnnotedExpr::App(ref func, ref op, ref type_) => format!("({} {}) : {}", func, op, type_),
+            AnnotedExpr::Let(ref id, ref val, ref body, ref type_) => format!("(let {} = {} in {}) : {}", id, val, body, type_),
+            AnnotedExpr::If(ref pred, ref then, ref otherwise, ref type_) => format!("(if {} then {} else {}) : {}", pred, then, otherwise, type_),
         })
     }
 }

@@ -46,7 +46,7 @@ type Substitutions = Vec<Substitution>;
 
 /// Creates an AnnotedExpr from an Expr or an Error 
 /// if there is an undefined name.
-pub fn annote(e: &Expr, env: &Enviroment, name_gen: &mut NameGenerator) -> Result<AnnotedExpr> {
+pub fn annote(e: &Expr, env: &mut Enviroment, name_gen: &mut NameGenerator) -> Result<AnnotedExpr> {
     match *e {
         Expr::Num(n) => Ok(AnnotedExpr::Num(n, PrimitiveType::Num)),
         Expr::Bool(b) => Ok(AnnotedExpr::Bool(b, PrimitiveType::Bool)),
@@ -80,6 +80,30 @@ pub fn annote(e: &Expr, env: &Enviroment, name_gen: &mut NameGenerator) -> Resul
             let new_type = PrimitiveType::Var(new_name);
             Ok(AnnotedExpr::App(box func, box arg, new_type))
         },
+        Expr::Let(ref id, ref val, ref body) => {
+            let annoted_val = annote(val, env, name_gen)?;
+            env.insert(id.clone(), type_of(&annoted_val));
+            let annoted_body = annote(body, env, name_gen)?;
+            if let Some(t) = env.get(id) {
+                Ok(AnnotedExpr::Let(id.clone(),
+                   box annoted_val,
+                   box annoted_body,
+                   PrimitiveType::Var(name_gen.next_name())))
+            } else {
+                Err(Error::UndefinedName(id.clone()))
+            }
+        },
+        Expr::If(ref pred, ref then, ref otherwise) => {
+            let annoted_pred = annote(pred, env, name_gen)?;
+            let annoted_then = annote(then, env, name_gen)?;
+            let annoted_otherwise = annote(otherwise, env, name_gen)?;
+            Ok(AnnotedExpr::If(
+                box annoted_pred,
+                box annoted_then,
+                box annoted_otherwise,
+                PrimitiveType::Var(name_gen.next_name())
+            ))
+        },
     } 
 }
 
@@ -91,7 +115,9 @@ pub fn type_of(e: &AnnotedExpr) -> PrimitiveType {
         AnnotedExpr::Var(_, ref t)         |
         AnnotedExpr::App(_, _, ref t)      |
         AnnotedExpr::BinOp(_, _, _, ref t) |
-        AnnotedExpr::Fun(_, _, ref t)       => t.clone() 
+        AnnotedExpr::Fun(_, _, ref t)      |
+        AnnotedExpr::Let(_, _, _, ref t)   |
+        AnnotedExpr::If(_, _, _, ref t)     => t.clone() 
     }
 }
 
@@ -143,6 +169,18 @@ fn collect(e: &AnnotedExpr) -> Result<Constraints> {
                 },
                 _ => Err(Error::TypeError("Invalid AnnotedExpr: Applying non-Fun".to_owned()))
             }
+        },
+        AnnotedExpr::Let(ref id, ref val, ref body, ref type_) => {
+            let mut constraints = [collect(body)?, collect(val)?].concat();
+            constraints.push(Constraint(type_of(body), type_.clone()));
+            Ok(constraints)
+        },
+        AnnotedExpr::If(ref pred, ref then, ref otherwise, ref type_) => {
+            let mut constraints = [collect(pred)?, collect(then)?, collect(otherwise)?].concat();
+            constraints.push(Constraint(type_of(pred), PrimitiveType::Bool));
+            constraints.push(Constraint(type_of(then), type_.clone()));
+            constraints.push(Constraint(type_of(then), type_of(otherwise)));
+            Ok(constraints)
         }
     }
 }
@@ -180,7 +218,7 @@ fn unify_one(t1: &PrimitiveType, t2: &PrimitiveType) -> Result<Substitutions> {
             unify(&mut vec![Constraint(*a.clone(), *x.clone()),
                             Constraint(*b.clone(), *y.clone())])
         },
-        _ => Err(Error::TypeError("mismatched types".to_owned()))
+        _ => Err(Error::TypeError(format!("mismatched types: {} != {}", t1, t2)))
     }
 }
 
@@ -205,12 +243,26 @@ fn apply_subs_to_expr(subs: &Substitutions, expr: &AnnotedExpr) -> AnnotedExpr {
             let arg = apply_subs_to_expr(subs, arg);
             let t = apply(subs, t);
             AnnotedExpr::App(box fun, box arg, t)
-        }
+        },
+        AnnotedExpr::Let(ref id, ref val, ref body, ref t) => {
+            AnnotedExpr::Let(id.clone(), 
+                             box apply_subs_to_expr(subs, val),
+                             box apply_subs_to_expr(subs, body), 
+                             apply(subs, t))
+        },
+        AnnotedExpr::If(ref pred, ref then, ref otherwise, ref t) => {
+            AnnotedExpr::If(
+                box apply_subs_to_expr(subs, pred),
+                box apply_subs_to_expr(subs, then),
+                box apply_subs_to_expr(subs, otherwise), 
+                apply(subs, t)
+            )
+        },
     }
 }
 
-pub fn infer(env: &Enviroment, expr: &Expr, name_gen: &mut NameGenerator) -> Result<AnnotedExpr> {
-    let annoted = annote(expr, &env, name_gen)?;
+pub fn infer(env: &mut Enviroment, expr: &Expr, name_gen: &mut NameGenerator) -> Result<AnnotedExpr> {
+    let annoted = annote(expr, env, name_gen)?;
     let mut constraints = collect(&annoted)?;
     let subs = unify(&mut constraints)?;
     Ok(apply_subs_to_expr(&subs, &annoted))

@@ -4,6 +4,16 @@ use ast::{Expr, Op};
 grammar;
 
 pub Expr: Box<Expr> = {
+    Let,
+};
+
+Let: Box<Expr> = {
+    "let" <Id> "=" <Let> "in" <Let> => Box::new(Expr::Let(<>)),
+    If,
+};
+
+If: Box<Expr> = {
+    "if" <Let> "then" <Let> "else" <Let> => Box::new(Expr::If(<>)),
     Lambda,
 };
 

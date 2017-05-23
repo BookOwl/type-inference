@@ -29,7 +29,9 @@ fn get_ids(e: &Expr) -> Vec<String> {
         Expr::BinOp(ref l, _, ref r) => [get_ids(l), get_ids(r)].concat(),
         Expr::App(ref fun, ref arg) => [get_ids(fun), get_ids(arg)].concat(),
         Expr::Var(ref n) => vec![n.clone()],
-        Expr::Fun(ref arg_name, ref body) => [vec![arg_name.clone()], get_ids(body)].concat()
+        Expr::Fun(ref arg_name, ref body) => [vec![arg_name.clone()], get_ids(body)].concat(),
+        Expr::Let(ref id, ref val, ref body) => [vec![id.clone()], get_ids(val), get_ids(body)].concat(),
+        Expr::If(ref pred, ref then, ref otherwise) => [get_ids(pred), get_ids(then), get_ids(otherwise)].concat(),
     }
 }
 
@@ -56,7 +58,7 @@ fn repl() {
         for name in ids {
             env.insert(name, PrimitiveType::Var(name_gen.next_name()));
         }
-        match infer(&env, &expr, &mut name_gen) {
+        match infer(&mut env, &expr, &mut name_gen) {
             Ok(aexpr) => println!("{}", type_of(&aexpr)),
             Err(e) => println!("type error: {:?}", e),
         }
