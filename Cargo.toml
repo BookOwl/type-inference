@@ -2,5 +2,11 @@
 name = "type-inference"
 version = "0.1.0"
 authors = ["BookOwl <stanleybookowl@gmail.com>"]
+build = "build.rs" # LALRPOP preprocessing
 
 [dependencies]
+regex = "0.2.1"
+lalrpop-util = "0.13"
+
+[build-dependencies.lalrpop]
+version = "0.13.0"

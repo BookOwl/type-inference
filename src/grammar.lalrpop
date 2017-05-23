@@ -1,0 +1,78 @@
+use std::str::FromStr;
+use ast::{Expr, Op};
+
+grammar;
+
+pub Expr: Box<Expr> = {
+    Lambda,
+};
+
+Lambda: Box<Expr> = {
+    "fun" <Id> "->" <Expr> => Box::new(Expr::Fun(<>)),
+    App,
+};
+
+App: Box<Expr> = {
+    App LogicExpr => Box::new(Expr::App(<>)),
+    LogicExpr,
+};
+
+LogicExpr: Box<Expr> = {
+    LogicExpr LogicOp RelExpr => Box::new(Expr::BinOp(<>)),
+    RelExpr,
+};
+
+LogicOp: Op = {
+    "&&" => Op::And,
+    "||" => Op::Or,
+};
+
+RelExpr: Box<Expr> = {
+    RelExpr RelOp AddExpr => Box::new(Expr::BinOp(<>)),
+    AddExpr,
+};
+
+RelOp: Op = {
+    ">" => Op::Gt,
+    "<" => Op::Lt,
+};
+
+AddExpr: Box<Expr> = {
+    AddExpr AddOp Factor => Box::new(Expr::BinOp(<>)),
+    Factor,
+};
+
+AddOp: Op = {
+    "+" => Op::Add,
+    "-" => Op::Sub,
+};
+
+Factor: Box<Expr> = {
+    Factor FactorOp Term => Box::new(Expr::BinOp(<>)),
+    Term,
+};
+
+FactorOp: Op = {
+    "*" => Op::Mul,
+    "/" => Op::Div,
+};
+
+Term: Box<Expr> = {
+    Num => Box::new(Expr::Num(<>)),
+    Id => Box::new(Expr::Var(<>)),
+    Bool => Box::new(Expr::Bool(<>)),
+    "(" <Expr> ")"
+};
+
+Num: i32 = {
+    r"[0-9]+" => i32::from_str(<>).unwrap()
+};
+
+Id: String = {
+    r"[a-zA-Z_][a-zA-Z0-9_]*" => (<>).to_owned(),
+};
+
+Bool: bool = {
+    "true" => true,
+    "false" => false,
+};

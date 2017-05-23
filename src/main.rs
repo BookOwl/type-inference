@@ -13,11 +13,15 @@
 
 extern crate type_inference;
 use type_inference::infer::*;
+use type_inference::ast::*;
+use type_inference::parser;
 
 use std::collections::HashMap;
+use std::io;
+use std::io::Write;
 
 fn main() {
-    infer_test()
+    repl();
 }
 fn get_ids(e: &Expr) -> Vec<String> {
     match *e {
@@ -29,49 +33,32 @@ fn get_ids(e: &Expr) -> Vec<String> {
     }
 }
 
-fn infer_test() {
-    let exprs = vec![
-        ("Number", Expr::Num(123)),
-        ("Bool", Expr::Bool(true)),
-        ("Var", Expr::Var("x".to_owned())),
-        ("BinOp", Expr::BinOp(
-            box Expr::Num(1),
-            Op::Add,
-            box Expr::Num(2)
-        )),
-        ("BinOp 2", Expr::BinOp(
-            box Expr::BinOp(
-                box Expr::Num(3),
-                Op::Add,
-                box Expr::Num(-2),
-            ),
-            Op::Mul,
-            box Expr::BinOp(
-                box Expr::Var("spam".to_owned()),
-                Op::Add,
-                box Expr::Num(42),
-            ),
-        )),
-        ("Function", Expr::Fun(
-            "x".to_owned(),
-            box Expr::BinOp(
-                box Expr::Var("x".to_owned()),
-                Op::Mul,
-                box Expr::Var("x".to_owned()),
-            ),
-        )),
-    ];
-    let mut env = HashMap::new();
-    for (_, expr) in exprs {
-        let mut new_env = env.clone();
+fn repl() {
+    println!("Welcome to the type inference REPL");
+    println!("Hit ^C to quit ");
+    let mut stdout = io::stdout();
+    let mut stdin = io::stdin();
+    loop {
+        print!("> ");
+        stdout.flush().unwrap();
+        let mut input = String::new();
+        stdin.read_line(&mut input).unwrap();
+        let expr = match parser::parse_Expr(&input) {
+            Ok(expr) => expr,
+            Err(_) => {
+                println!("syntax error");
+                continue;
+            }
+        };
+        let mut env = HashMap::new();
         let mut name_gen = NameGenerator::new();
         let ids = get_ids(&expr);
         for name in ids {
-            new_env.insert(name, PrimitiveType::Var(name_gen.next_name()));
+            env.insert(name, PrimitiveType::Var(name_gen.next_name()));
         }
-        match infer(&new_env, &expr, &mut name_gen) {
-            Ok(aexpr) => println!("expr: {} type: {}", expr, type_of(&aexpr)),
-            Err(e) => println!("expr:{} Error: {:?}", expr, e),
+        match infer(&env, &expr, &mut name_gen) {
+            Ok(aexpr) => println!("{}", type_of(&aexpr)),
+            Err(e) => println!("type error: {:?}", e),
         }
     }
 }
