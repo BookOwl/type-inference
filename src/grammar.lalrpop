@@ -19,11 +19,6 @@ If: Box<Expr> = {
 
 Lambda: Box<Expr> = {
     "fun" <Id> "->" <Expr> => Box::new(Expr::Fun(<>)),
-    App,
-};
-
-App: Box<Expr> = {
-    App LogicExpr => Box::new(Expr::App(<>)),
     LogicExpr,
 };
 
@@ -59,13 +54,18 @@ AddOp: Op = {
 };
 
 Factor: Box<Expr> = {
-    Factor FactorOp Term => Box::new(Expr::BinOp(<>)),
-    Term,
+    Factor FactorOp App => Box::new(Expr::BinOp(<>)),
+    App,
 };
 
 FactorOp: Op = {
     "*" => Op::Mul,
     "/" => Op::Div,
+};
+
+App: Box<Expr> = {
+    App Term => Box::new(Expr::App(<>)),
+    Term,
 };
 
 Term: Box<Expr> = {
