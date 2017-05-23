@@ -17,7 +17,7 @@ The language that this project infers types on it very simple. It only contains
 * Logical operators (`&&`, `||`)
 * Variables (`x`, `foo_24`, etc.)
 * Let (`let x = 5 in x + 1`)
-* If (`if true then 1 else 0`)
+* If (`if true then 1 else 0`, `let fact = fun x -> if x < 2 then 1 else (x * (fact (x - 1))) in fact 5`)
 
 ## License
 This project is [Unlicensed](UNLICENSE).
