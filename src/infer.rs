@@ -135,7 +135,7 @@ fn collect(e: &AnnotedExpr) -> Result<Constraints> {
                          Constraint(right_type, PrimitiveType::Num),
                          Constraint(res_type.clone(), PrimitiveType::Num)]
                 },
-                Op::Gt | Op::Lt => vec![Constraint(left_type, right_type),
+                Op::Gt | Op::Lt | Op::Equal => vec![Constraint(left_type, right_type),
                                         Constraint(res_type.clone(), PrimitiveType::Bool)],
                 Op::And | Op::Or => vec![Constraint(left_type, PrimitiveType::Bool),
                                          Constraint(right_type, PrimitiveType::Bool),

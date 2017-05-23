@@ -25,6 +25,7 @@ pub enum Op {
     Mul,
     Sub,
     Div,
+    Equal,
     Gt,
     Lt,
     And,
@@ -41,6 +42,7 @@ impl Display for Op {
             Op::Or  => "||",
             Op::Sub => "-",
             Op::Div => "/",
+            Op::Equal => "=",
         })
     }
 }

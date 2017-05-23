@@ -13,7 +13,7 @@ The language that this project infers types on it very simple. It only contains
 * Integers (`1`, `42`, etc.)
 * Bools (`true`, `false`)
 * Math Operators (`+`, `-`, `*`, `/`)
-* Relational operators (`>`, `<`)
+* Relational operators (`>`, `<`, `=`)
 * Logical operators (`&&`, `||`)
 * Variables (`x`, `foo_24`, etc.)
 * Let (`let x = 5 in x + 1`)

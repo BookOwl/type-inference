@@ -45,6 +45,7 @@ RelExpr: Box<Expr> = {
 RelOp: Op = {
     ">" => Op::Gt,
     "<" => Op::Lt,
+    "=" => Op::Equal,
 };
 
 AddExpr: Box<Expr> = {
