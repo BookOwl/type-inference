@@ -23,16 +23,16 @@ pub type Result<T> = ::std::result::Result<T, Error>;
 
 /// A mapping between names and their types
 #[derive(Debug, Clone)]
-pub enum Enviroment<'a> {
+pub enum Enviroment {
     Empty,
-    Frame(String, TypeScheme, &'a Enviroment<'a>),
+    Frame(String, TypeScheme, Box<Enviroment>),
 }
-impl<'a> Enviroment<'a> {
-    pub fn empty() -> Enviroment<'a> {
+impl Enviroment {
+    pub fn empty() -> Enviroment {
         Enviroment::Empty
     }
-    pub fn extend(&'a self, n: String, t: TypeScheme) -> Enviroment<'a> {
-        Enviroment::Frame(n, t, self)
+    pub fn extend(&self, n: String, t: TypeScheme) -> Enviroment {
+        Enviroment::Frame(n, t, box self.clone())
     }
     pub fn lookup(&self, key: &str) -> Option<TypeScheme> {
         match *self {
@@ -170,7 +170,13 @@ fn tp(exp: &Expr, t: &PrimitiveType, env: &Enviroment, s: &Subst, var_gen: &mut 
             let env2 = env.extend(x.clone(), TypeScheme::from_type(&s1.apply(&a), env));
             tp(e2, t, &env2, &s1, var_gen)
         },
-        Expr::LetRec(..) => unimplemented!(),
+        Expr::LetRec(ref x, ref e1, ref e2) => {
+            let a = var_gen.next_typevar();
+            let env1 = env.extend(x.clone(), TypeScheme::from_type(&a, env));
+            let s1 = tp(e1, &a.clone(), &env1, s, var_gen)?;
+            let env2 = env.extend(x.clone(), TypeScheme::from_type(&s1.apply(&a), env));
+            tp(e2, t, &env2, &s1, var_gen)
+        },
         Expr::Num(_) => mgu(t, &int_type(), s),
         Expr::Bool(_) => mgu(t, &bool_type(), s),
         Expr::BinOp(ref l, ref op, ref r) => {
@@ -200,11 +206,34 @@ pub fn type_of(expr: &Expr, env: &Enviroment, var_gen: &mut VarGenerator) -> Res
     Ok(s.apply(&a))
 }
 
+pub fn top_level_env(var_gen: &mut VarGenerator) -> Enviroment {
+    let a = var_gen.next_typevar();
+    let abstract_list = list_type(a);
+    let env = Enviroment::Empty;
+    let env = env.extend("nil".to_owned(), TypeScheme::from_type(&abstract_list.clone(), &env));
+    let a = var_gen.next_typevar();
+    let pair = PrimitiveType::Fun(box a.clone(), box PrimitiveType::Fun(box list_type(a.clone()), box list_type(a)));
+    let env = env.extend("pair".to_owned(), TypeScheme::from_type(&pair, &env));
+    let a = var_gen.next_typevar();
+    let first = PrimitiveType::Fun(box list_type(a.clone()), box a.clone());
+    let env = env.extend("first".to_owned(), TypeScheme::from_type(&first, &env));
+    let a = var_gen.next_typevar();
+    let rest = PrimitiveType::Fun(box list_type(a.clone()), box list_type(a.clone()));
+    let env = env.extend("rest".to_owned(), TypeScheme::from_type(&rest, &env));
+    let a = var_gen.next_typevar();
+    let is_nil = PrimitiveType::Fun(box list_type(a.clone()), box bool_type());
+    let env = env.extend("is_nil".to_owned(), TypeScheme::from_type(&is_nil, &env));
+    env
+}
+
 pub fn int_type() -> PrimitiveType {
     PrimitiveType::Con("int".to_owned(), vec![])
 }
 pub fn bool_type() -> PrimitiveType {
     PrimitiveType::Con("bool".to_owned(), vec![])
+}
+pub fn list_type(t: PrimitiveType) -> PrimitiveType {
+    PrimitiveType::Con("List".to_owned(), vec![t])
 }
 
 #[derive(Debug, Clone)]

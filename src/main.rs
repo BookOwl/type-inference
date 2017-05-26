@@ -26,7 +26,6 @@ fn repl() {
     println!("Hit ^C to quit ");
     let mut stdout = io::stdout();
     let mut stdin = io::stdin();
-    let mut env = Enviroment::empty();
     loop {
         print!("> ");
         stdout.flush().unwrap();
@@ -40,6 +39,7 @@ fn repl() {
             }
         };
         let mut var_gen = VarGenerator::new();
+        let env = top_level_env(&mut var_gen);
         match type_of(&expr, &env, &mut var_gen) {
             Ok(typ) => println!("{}", typ),
             Err(e) => println!("{:?}", e),
