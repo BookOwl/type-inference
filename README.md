@@ -24,7 +24,7 @@ There are also a few predefined functions and values.
 
 * `pair` takes an `a` and a `List<a>` and returns a `List<a>`. It is basically a typed cons.
 * `nil` is a generic empty list.
-* 'first` takes a `List<a>` and returns an `a`. It is like car in Scheme.
+* `first` takes a `List<a>` and returns an `a`. It is like car in Scheme.
 * `rest` takes a `List<a>` and returns a `List<a>`. It is like Scheme's cdr.
 * `is_nil` takes a `List<a>` and returns a bool.
 
