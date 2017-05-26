@@ -8,10 +8,8 @@
 
 extern crate type_inference;
 use type_inference::infer::*;
-use type_inference::ast::*;
 use type_inference::parser;
 
-use std::collections::HashMap;
 use std::io;
 use std::io::Write;
 
@@ -23,7 +21,7 @@ fn repl() {
     println!("Welcome to the type inference REPL");
     println!("Hit ^C to quit ");
     let mut stdout = io::stdout();
-    let mut stdin = io::stdin();
+    let stdin = io::stdin();
     loop {
         print!("> ");
         stdout.flush().unwrap();
