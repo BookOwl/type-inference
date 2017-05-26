@@ -17,7 +17,7 @@ The language that this project infers types on it very simple. It only contains
 * Logical operators (`&&`, `||`)
 * Variables (`x`, `foo_24`, etc.)
 * Let (`let x = 5 in x + 1`)
-* Letrec (`let x = fun y -> ... in x 5). Like let but allows recursive functions.
+* Letrec (`let x = fun y -> ... in x 5`). Like let but allows recursive functions.
 * If (`if true then 1 else 0`, `let fact = fun x -> if x < 2 then 1 else (x * (fact (x - 1))) in fact 5`)
 
 There are also a few predefined functions and values.
