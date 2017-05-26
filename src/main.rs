@@ -20,17 +20,6 @@ use std::io::Write;
 fn main() {
     repl();
 }
-fn get_ids(e: &Expr) -> Vec<String> {
-    match *e {
-        Expr::Num(..) | Expr::Bool(..) => vec![],
-        Expr::BinOp(ref l, _, ref r) => [get_ids(l), get_ids(r)].concat(),
-        Expr::App(ref fun, ref arg) => [get_ids(fun), get_ids(arg)].concat(),
-        Expr::Var(ref n) => vec![n.clone()],
-        Expr::Fun(ref arg_name, ref body) => [vec![arg_name.clone()], get_ids(body)].concat(),
-        Expr::Let(ref id, ref val, ref body) => [vec![id.clone()], get_ids(val), get_ids(body)].concat(),
-        Expr::If(ref pred, ref then, ref otherwise) => [get_ids(pred), get_ids(then), get_ids(otherwise)].concat(),
-    }
-}
 
 fn repl() {
     println!("Welcome to the type inference REPL");
@@ -50,11 +39,10 @@ fn repl() {
                 continue;
             }
         };
-        let mut new_env = env.new_frame();
-        let mut name_gen = NameGenerator::new();
-        match infer(&mut new_env, &expr, &mut name_gen) {
-            Ok(aexpr) => println!("{}", type_of(&aexpr)),
-            Err(e) => println!("type error: {:?}", e),
+        let mut var_gen = VarGenerator::new();
+        match type_of(&expr, &env, &mut var_gen) {
+            Ok(typ) => println!("{}", typ),
+            Err(e) => println!("{:?}", e),
         }
     }
 }

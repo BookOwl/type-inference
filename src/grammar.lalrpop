@@ -9,6 +9,7 @@ pub Expr: Box<Expr> = {
 
 Let: Box<Expr> = {
     "let" <Id> "=" <Let> "in" <Let> => Box::new(Expr::Let(<>)),
+    "letrec" <Id> "=" <Let> "in" <Let> => Box::new(Expr::LetRec(<>)),
     If,
 };
 

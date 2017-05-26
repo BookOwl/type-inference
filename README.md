@@ -1,6 +1,6 @@
 # type-inference
 
-This project is an implementation of Hindley Milner Type inference in Rust. It is based off of https://github.com/prakhar1989/type-inference
+This project is an implementation of Hindley Milner Type inference in Rust. It is based off of chapter 16 in http://www.scala-lang.org/docu/files/ScalaByExample.pdf
 
 ## Running
 This project contains a simple REPL that allows you to enter your own expressions to type check. To run the REPL clone this repo and run `cargo run`
