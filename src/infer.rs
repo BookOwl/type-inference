@@ -32,7 +32,7 @@ impl Enviroment {
         Enviroment::Empty
     }
     pub fn extend(&self, n: String, t: TypeScheme) -> Enviroment {
-        Enviroment::Frame(n, t, box self.clone())
+        Enviroment::Frame(n, t, Box::new(self.clone()))
     }
     pub fn lookup(&self, key: &str) -> Option<TypeScheme> {
         match *self {
@@ -84,7 +84,7 @@ impl Subst {
     }
     pub fn extend(&self, x: PrimitiveType, t: PrimitiveType) -> Subst {
         Subst {
-            prev: Some(box self.clone()),
+            prev: Some(Box::new(self.clone())),
             x: Some(x),
             t: Some(t),
         }
@@ -102,7 +102,7 @@ impl Subst {
                 let u = self.lookup(tv);
                 if *t == u { t.clone() } else { self.apply(&u) }
             },
-            PrimitiveType::Fun(ref a, ref r) => PrimitiveType::Fun(box self.apply(a), box self.apply(r)),
+            PrimitiveType::Fun(ref a, ref r) => PrimitiveType::Fun(Box::new(self.apply(a)), Box::new(self.apply(r))),
             PrimitiveType::Con(ref name, ref typs) => PrimitiveType::Con(name.clone(), typs.iter().map(|t| self.apply(t)).collect())
         }
     }
@@ -155,13 +155,13 @@ fn tp(exp: &Expr, t: &PrimitiveType, env: &Enviroment, s: &Subst, var_gen: &mut 
         Expr::Fun(ref arg, ref body) => {
             let a = var_gen.next_typevar();
             let b = var_gen.next_typevar();
-            let s1 = mgu(t, &PrimitiveType::Fun(box a.clone(), box b.clone()), s)?;
+            let s1 = mgu(t, &PrimitiveType::Fun(Box::new(a.clone()), Box::new(b.clone())), s)?;
             let env1 = env.extend(arg.clone(), TypeScheme::new(a.clone(), HashSet::new()));
             tp(body, &b, &env1, &s1, var_gen)
         },
         Expr::App(ref e1, ref e2) => {
             let a = var_gen.next_typevar();
-            let s1 = tp(e1, &PrimitiveType::Fun(box a.clone(), box t.clone()), env, s, var_gen)?;
+            let s1 = tp(e1, &PrimitiveType::Fun(Box::new(a.clone()), Box::new(t.clone())), env, s, var_gen)?;
             tp(e2, &a, env, &s1, var_gen)
         },
         Expr::Let(ref x, ref e1, ref e2) => {
@@ -212,16 +212,16 @@ pub fn top_level_env(var_gen: &mut VarGenerator) -> Enviroment {
     let env = Enviroment::Empty;
     let env = env.extend("nil".to_owned(), TypeScheme::from_type(&abstract_list.clone(), &env));
     let a = var_gen.next_typevar();
-    let pair = PrimitiveType::Fun(box a.clone(), box PrimitiveType::Fun(box list_type(a.clone()), box list_type(a)));
+    let pair = PrimitiveType::Fun(Box::new(a.clone()), Box::new(PrimitiveType::Fun(Box::new(list_type(a.clone())), Box::new(list_type(a)))));
     let env = env.extend("pair".to_owned(), TypeScheme::from_type(&pair, &env));
     let a = var_gen.next_typevar();
-    let first = PrimitiveType::Fun(box list_type(a.clone()), box a.clone());
+    let first = PrimitiveType::Fun(Box::new(list_type(a.clone())), Box::new(a.clone()));
     let env = env.extend("first".to_owned(), TypeScheme::from_type(&first, &env));
     let a = var_gen.next_typevar();
-    let rest = PrimitiveType::Fun(box list_type(a.clone()), box list_type(a.clone()));
+    let rest = PrimitiveType::Fun(Box::new(list_type(a.clone())), Box::new(list_type(a.clone())));
     let env = env.extend("rest".to_owned(), TypeScheme::from_type(&rest, &env));
     let a = var_gen.next_typevar();
-    let is_nil = PrimitiveType::Fun(box list_type(a.clone()), box bool_type());
+    let is_nil = PrimitiveType::Fun(Box::new(list_type(a.clone())), Box::new(bool_type()));
     let env = env.extend("is_nil".to_owned(), TypeScheme::from_type(&is_nil, &env));
     env
 }

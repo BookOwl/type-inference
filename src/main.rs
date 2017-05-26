@@ -6,8 +6,6 @@
 // * Fix https://github.com/prakhar1989/type-inference/issues/5
 // * Add typing for more features. 
 
-#![feature(box_syntax)]
-
 extern crate type_inference;
 use type_inference::infer::*;
 use type_inference::ast::*;
