@@ -131,9 +131,10 @@ impl TypeScheme {
 
 fn mgu(t: &PrimitiveType, u: &PrimitiveType, s: &Subst) -> Result<Subst> {
     use ast::PrimitiveType::*;
-    match (s.apply(t), s.apply(u)) {
+    let (w, r) = (s.apply(t), s.apply(u));
+    match (w, r.clone()) {
         (Var(a), Var(b)) if a == b => Ok(s.clone()),
-        (Var(a), _) if !u.type_vars().contains(&a) => Ok(s.extend(Var(a), u.clone())),
+        (Var(a), _) if !r.type_vars().contains(&a) => Ok(s.extend(Var(a), u.clone())),
         (_, Var(_)) => mgu(u, t, s),
         (Fun(ref t1, ref t2), Fun(ref u1, ref u2)) => mgu(t1, u1, &mgu(t2, u2, s)?),
         (Con(ref n1, ref ts), Con(ref n2, ref us)) if n1 == n2 => {
