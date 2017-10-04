@@ -101,29 +101,3 @@ impl Display for Expr {
     })
     }
 }
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AnnotedExpr {
-    Num(i32, PrimitiveType),
-    Bool(bool, PrimitiveType),
-    Var(String, PrimitiveType),
-    BinOp(Box<AnnotedExpr>, Op, Box<AnnotedExpr>, PrimitiveType),
-    Fun(String, Box<AnnotedExpr>, PrimitiveType),
-    App(Box<AnnotedExpr>,  Box<AnnotedExpr>, PrimitiveType),
-    Let(String, Box<AnnotedExpr>, Box<AnnotedExpr>, PrimitiveType),
-    If(Box<AnnotedExpr>, Box<AnnotedExpr>, Box<AnnotedExpr>, PrimitiveType),
-}
-impl Display for AnnotedExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
-            AnnotedExpr::Num(ref n, ref type_) => format!("({} : {})", n, type_),
-            AnnotedExpr::Bool(ref b, ref type_) => format!("({} : {})", b, type_),
-            AnnotedExpr::Var(ref v, ref type_) => format!("({} : {})", v, type_),
-            AnnotedExpr::BinOp(ref l, ref op, ref r, ref type_) => format!("({} {} {} : {})", l, op, r, type_),
-            AnnotedExpr::Fun(ref id, ref body, ref type_) => format!("(fun {} -> {}) : {}", id, body, type_),
-            AnnotedExpr::App(ref func, ref op, ref type_) => format!("({} {}) : {}", func, op, type_),
-            AnnotedExpr::Let(ref id, ref val, ref body, ref type_) => format!("(let {} = {} in {}) : {}", id, val, body, type_),
-            AnnotedExpr::If(ref pred, ref then, ref otherwise, ref type_) => format!("(if {} then {} else {}) : {}", pred, then, otherwise, type_),
-        })
-    }
-}
